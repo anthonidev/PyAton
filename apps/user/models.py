@@ -1,6 +1,7 @@
 from datetime import datetime
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
+from apps.account.models import UserProfile
 from apps.cart.models import Cart
 
 
@@ -12,6 +13,9 @@ class UserAccountManager(BaseUserManager):
         user = self.model(email=email, **extra_fields)
         user.set_password(password)
         user.save()
+        
+        profile = UserProfile.objects.create(user=user)
+        profile.save()
         
         shopping_cart = Cart.objects.create(user=user)
         shopping_cart.save()
@@ -34,7 +38,7 @@ class UserAccount(AbstractBaseUser, PermissionsMixin):
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
 
-    dob = models.DateField(default=datetime.now)
+    
     join = models.DateField(default=datetime.now)
 
     objects = UserAccountManager()
