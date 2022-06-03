@@ -11,7 +11,6 @@ class CategorySerializer(serializers.ModelSerializer):
             'is_featured',
             'photo',
             'slug',
-            'description',
             'get_parent',
             'get_parent_slug',
         ]
@@ -68,6 +67,7 @@ class CharacteristicProductSerializer(serializers.ModelSerializer):
         
         fields = [
             'title',
+            'description',
         ]
 class ProductImageSerializer(serializers.ModelSerializer):
     

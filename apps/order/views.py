@@ -18,8 +18,6 @@ class GetOrderTotalView(APIView):
     def get(self, request, format=None):
         user = self.request.user
 
-        # tax = 0.18
-
         shipping_id = request.query_params.get('shipping_id')
         shipping_id = str(shipping_id)
 
@@ -114,14 +112,12 @@ class ProcessOrderView(APIView):
         coupon_code = str(data['coupon_code'])
 
         full_name = data['full_name']
-        address_line_1 = data['address_line_1']
-        address_line_2 = data['address_line_2']
+        address = data['address']
         city = data['city']
         district = data['district']
         postal_zip_code = data['zipcode']
         telephone_number = data['telephone_number']
 
-        # revisar si datos de shipping son validos
         
 
         if not Shipping.objects.filter(id__iexact=shipping_id).exists():
@@ -172,7 +168,7 @@ class ProcessOrderView(APIView):
                 )
 
                 discount_amount = float(price_coupon.value)
-                price_coupon.use
+                price_coupon.use()
                 if discount_amount < total_amount:
                     total_amount -= discount_amount
 
@@ -225,8 +221,8 @@ class ProcessOrderView(APIView):
                 transaction_id=f'{full_name} {total_amount} {postal_zip_code}',
                 amount=total_amount,
                 full_name=full_name,
-                address_line_1=address_line_1,
-                address_line_2=address_line_2,
+                address=address,
+               
                 district=district,
                 city=city,
                 postal_zip_code=postal_zip_code,

@@ -1,22 +1,23 @@
 
 # Create your views here.
-from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
 from .models import Shipping
 from .serializers import ShippingSerializer
+from rest_framework import generics
 
 
-class GetShippingView(APIView):
+class GetShippingView(generics.ListAPIView):
+    serializer_class = ShippingSerializer
     permission_classes = (permissions.AllowAny, )
+    queryset = Shipping.objects.order_by('price').all()
 
-    def get(self, request, format=None):
+    def list(self, request, format=None):
         if Shipping.objects.all().exists():
-            shipping_options = Shipping.objects.order_by('price').all()
-            shipping_options = ShippingSerializer(shipping_options, many=True)
-
+            queryset = self.get_queryset()
             return Response(
-                {'shipping': shipping_options.data},
+                {'shipping': self.serializer_class(
+                    queryset, many=True).data},
                 status=status.HTTP_200_OK
             )
         else:

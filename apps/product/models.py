@@ -1,5 +1,4 @@
 from datetime import datetime
-from pydoc import describe
 from django.db import models
 from cloudinary.models import CloudinaryField
 from django.template.defaultfilters import slugify

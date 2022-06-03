@@ -1,3 +1,4 @@
+import random
 from django.utils import timezone
 from apps.product.models import Brand, Category, CharacteristicProduct, Product, ProductImage
 from apps.product.serializers import BrandSerializer, CategorySerializer, CharacteristicProductSerializer, ProductImageSerializer, ProductSerializer
@@ -226,7 +227,6 @@ class ProductDetailView(generics.ListAPIView):
     serializer_class = ProductSerializer
 
     def get(self, request, slug, format=None):
-
         if Product.objects.filter(slug=slug).exists():
             product = Product.objects.get(slug=slug)
 
@@ -261,11 +261,14 @@ class ProductDetailView(generics.ListAPIView):
             characteristic = CharacteristicProductSerializer(
                 characteristic, many=True)
             images = ProductImageSerializer(images, many=True)
+            products_views = list(Product.objects.order_by('-num_visits').exclude(id=product.id).exclude(id__in=related_products))[:10]
+            products_views = random.sample(products_views, 4)
 
             return Response({
                 'characteristic': characteristic.data,
                 'images': images.data,
                 'related': self.serializer_class(related_products, many=True).data[:4],
+                'products_views': self.serializer_class(products_views, many=True).data,
                 'colors': self.serializer_class(products_colors, many=True).data,
                 'product': self.serializer_class(product).data,
             }, status=status.HTTP_200_OK)

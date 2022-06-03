@@ -21,6 +21,12 @@ class Coupon(models.Model):
     
     def use(self):
         self.num_used+=1
-        if self.num_used==self.num_available:
+        self.num_available-=1
+        self.save()  
+        
+        if self.num_available==0:
             self.active=False
-        self.save()   
+        
+        return self.active
+        
+        
