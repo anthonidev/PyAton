@@ -28,9 +28,9 @@ class UserAddress(models.Model):
     account = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
     first_name = models.CharField(max_length=255)
     last_name = models.CharField(max_length=255)
-    enterprise = models.CharField(max_length=255, default='')
+    enterprise = models.CharField(max_length=255, default='', blank=True, null=True)
     address = models.CharField(max_length=255, default='')
-    zipcode = models.CharField(max_length=20, default='')
+    zipcode = models.CharField(max_length=20, default='', blank=True, null=True)
     district = models.CharField(max_length=255, default='')
     city = models.CharField(
         max_length=255, choices=Countries.choices, default=Countries.Lima)
