@@ -43,7 +43,7 @@ class Category(models.Model):
 
 class Product(models.Model):
     category = models.ForeignKey(
-        Category, related_name='products', on_delete=models.CASCADE)
+        Category, related_name='categories', on_delete=models.CASCADE)
     brand = models.ForeignKey(Brand, on_delete=models.CASCADE)
 
     parent = models.ForeignKey(

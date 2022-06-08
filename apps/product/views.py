@@ -230,7 +230,7 @@ class ProductDetailView(generics.ListAPIView):
         if Product.objects.filter(slug=slug).exists():
             product = Product.objects.get(slug=slug)
 
-            related_products = product.category.products.filter(
+            related_products = product.category.categories.filter(
                 parent=None).order_by("?").exclude(id=product.id)
 
             if product.variants.all():

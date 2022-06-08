@@ -1,23 +1,38 @@
 from math import e
-from django.shortcuts import render
-from django.conf import settings
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from apps.account.models import UserAddress, UserProfile
 from apps.cart.models import Cart, CartItem
 from apps.coupon.models import Coupon
 from apps.order.models import Order, OrderItem
+from apps.order.serializers import OrderSerializer
 from apps.product.models import Product
 from apps.shipping.models import Shipping
-from django.core.mail import send_mail
+from rest_framework import status, generics, permissions
+from rest_framework.pagination import PageNumberPagination
 
-# Create your views here.
+
+class OrderView(generics.ListAPIView):
+    permission_classes = (permissions.IsAuthenticated, )
+    pagination_class = PageNumberPagination
+    serializer_class = OrderSerializer
+    queryset = Order.objects.all()
+
+    def list(self, request, format=None):
+        user = self.request.user
+        queryset = self.get_queryset()
+
+        queryset = queryset.filter(user=user)
+        serializer = self.serializer_class(
+            queryset, many=True, context={'request': request})
+        page = self.paginate_queryset(serializer.data)
+        return self.get_paginated_response(page)
 
 
 class GetOrderTotalView(APIView):
     def get(self, request, format=None):
         user = self.request.user
-
         shipping_id = request.query_params.get('shipping_id')
         shipping_id = str(shipping_id)
 
@@ -69,9 +84,6 @@ class GetOrderTotalView(APIView):
                 # Total despues del cupon
                 total_after_coupon = round(total_after_coupon, 2)
 
-                # Impuesto
-                # estimated_tax = round(total_amount * tax, 2)
-
                 # total_amount += (total_amount * tax)
 
                 shipping_cost = 0.0
@@ -89,7 +101,6 @@ class GetOrderTotalView(APIView):
                     'original_price': f'{original_price:.2f}',
                     'total_after_coupon': f'{total_after_coupon:.2f}',
                     'total_amount': f'{total_amount:.2f}',
-                    # 'estimated_tax': f'{estimated_tax:.2f}',
                     'shipping_cost': f'{shipping_cost:.2f}'
                 },
                     status=status.HTTP_200_OK
@@ -106,20 +117,27 @@ class ProcessOrderView(APIView):
     def post(self, request, format=None):
         user = self.request.user
         data = self.request.data
-  
-      
+
         shipping_id = str(data['shipping_id'])
         coupon_code = str(data['coupon_code'])
+        address_id = str(data['address_id'])
 
-        full_name = data['full_name']
-        address = data['address']
-        city = data['city']
-        district = data['district']
-        postal_zip_code = data['zipcode']
-        telephone_number = data['telephone_number']
+        user_profile = UserProfile.objects.get(user=user)
+        addressObject = UserAddress.objects.get(
+            account=user_profile, id=address_id)
 
-        
-
+        if(addressObject):
+            full_name = addressObject.first_name + " " + addressObject.last_name
+            address = addressObject.address
+            city = addressObject.city
+            district = addressObject.district
+            postal_zip_code = addressObject.zipcode
+            telephone_number = addressObject.phone
+        else:
+            return Response(
+                {'error': 'Address does not exist'},
+                status=status.HTTP_404_NOT_FOUND
+            )
         if not Shipping.objects.filter(id__iexact=shipping_id).exists():
             return Response(
                 {'error': 'Invalid shipping option'},
@@ -172,8 +190,6 @@ class ProcessOrderView(APIView):
                 if discount_amount < total_amount:
                     total_amount -= discount_amount
 
-      
-
         shipping = Shipping.objects.get(id=int(shipping_id))
 
         shipping_name = shipping.name
@@ -183,38 +199,20 @@ class ProcessOrderView(APIView):
         total_amount += float(shipping_price)
         total_amount = round(total_amount, 2)
 
-       
-
         for cart_item in cart_items:
-                update_product = Product.objects.get(id=cart_item.product.id)
+            update_product = Product.objects.get(id=cart_item.product.id)
 
-                # encontrar cantidad despues de coompra
-                quantity = int(update_product.quantity) - int(cart_item.count)
+            # encontrar cantidad despues de coompra
+            quantity = int(update_product.quantity) - int(cart_item.count)
 
-                # obtener cantidad de producto por vender
-                sold = int(update_product.sold) + int(cart_item.count)
+            # obtener cantidad de producto por vender
+            sold = int(update_product.sold) + int(cart_item.count)
 
-                # actualizar el producto
-                Product.objects.filter(id=cart_item.product.id).update(
-                    quantity=quantity, sold=sold
-                )
+            # actualizar el producto
+            Product.objects.filter(id=cart_item.product.id).update(
+                quantity=quantity, sold=sold
+            )
 
-            # crear orden
-        
-        # print("user",user)
-        # print("code",f'{full_name} {total_amount} {postal_zip_code}')
-        # print("amout",total_amount)
-        # print("fullname",full_name)
-        # print("address_line_1",address_line_1)
-        # print("address_line_2",address_line_2)
-        # print("city",city)
-        # print("postal_zip_code",postal_zip_code)
-        # print("telephone_number",telephone_number)
-        # print("shipping_name",shipping_name)
-        # print("shipping_time",shipping_time)
-        # print("shipping_price",float(shipping_price))
-        # print("district",district)
-       
         try:
             order = Order.objects.create(
                 user=user,
@@ -222,7 +220,7 @@ class ProcessOrderView(APIView):
                 amount=total_amount,
                 full_name=full_name,
                 address=address,
-               
+
                 district=district,
                 city=city,
                 postal_zip_code=postal_zip_code,
@@ -237,7 +235,7 @@ class ProcessOrderView(APIView):
                 {'error': 'Transaction succeeded but failed to create the order'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-        print('order',order)
+        print('order', order)
         for cart_item in cart_items:
             try:
                 # agarrar el producto
@@ -252,7 +250,7 @@ class ProcessOrderView(APIView):
                 )
             except (RuntimeError, TypeError, NameError):
                 print(NameError)
-                
+
                 return Response(
                     {'error': 'Transaction succeeded and order created, but failed to create an order item'},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -294,4 +292,3 @@ class ProcessOrderView(APIView):
             {'success': 'Transaction successful and order was created'},
             status=status.HTTP_200_OK
         )
-      

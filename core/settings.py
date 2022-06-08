@@ -45,7 +45,7 @@ PROJECT_APPS = [
 MAIN_APPS = [
     'apps.product',
     'apps.cart',
-    # 'apps.wishlist',
+    'apps.wishlist',
     'apps.shipping',
     'apps.coupon',
     'apps.order',
