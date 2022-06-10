@@ -1,20 +1,30 @@
 from rest_framework import serializers
-from .models import  Category, CharacteristicProduct, Product, Brand, ProductImage
+from .models import Category, CharacteristicProduct, Product, Brand, ProductImage
 
-class CategorySerializer(serializers.ModelSerializer):
+
+class CategoryChildrenSerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
-        
         fields = [
             'id',
             'title',
-            'is_featured',
-            'photo',
             'slug',
             'get_parent',
             'get_parent_slug',
+            'get_total'
         ]
 
+class CategorySerializer(serializers.ModelSerializer):
+    children = CategoryChildrenSerializer(many=True)
+    class Meta:
+        model = Category
+        fields = [
+            'id',
+            'title',
+            'photo',
+            'slug',
+            'children',
+        ]
 
 
 class BrandSerializer(serializers.ModelSerializer):
@@ -24,6 +34,7 @@ class BrandSerializer(serializers.ModelSerializer):
             'id',
             'title',
         ]
+
 
 class ProductSerializer(serializers.ModelSerializer):
     class Meta:
@@ -46,8 +57,8 @@ class ProductSerializer(serializers.ModelSerializer):
             'get_absolute_url',
             'description'
         ]
-        
-        
+
+
 # class ProductSerializer(serializers.ModelSerializer):
 #     class Meta:
 #         model = Product
@@ -64,13 +75,15 @@ class ProductSerializer(serializers.ModelSerializer):
 class CharacteristicProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = CharacteristicProduct
-        
+
         fields = [
             'title',
             'description',
         ]
+
+
 class ProductImageSerializer(serializers.ModelSerializer):
-    
+
     class Meta:
         model = ProductImage
         fields = [

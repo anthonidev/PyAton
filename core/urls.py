@@ -20,7 +20,6 @@ schema_view = get_schema_view(
 
 
 urlpatterns = [
-
     path('auth/', include('djoser.urls')),
     path('auth/', include('djoser.urls.jwt')),
     path('auth/', include('djoser.social.urls')),
@@ -31,7 +30,7 @@ urlpatterns = [
     path('api/shipping/', include('apps.shipping.urls')),
     path('api/coupon/', include('apps.coupon.urls')),
     path('api/order/', include('apps.order.urls')),
-      path('docs/', schema_view.with_ui('swagger', cache_timeout=0),
+    path('docs/', schema_view.with_ui('swagger', cache_timeout=0),
          name='schema-swagger-ui'),
     path('', admin.site.urls),
 ]

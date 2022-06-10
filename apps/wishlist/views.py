@@ -1,56 +1,37 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import status, generics, permissions
+
+from apps.wishlist.serializers import  WishListItemSerializer
 from .models import WishList, WishListItem
 from apps.product.models import Product
 from apps.product.serializers import ProductSerializer
+from rest_framework.pagination import PageNumberPagination
 
 
-def getWishlist(user, request):
-    wishlist = WishList.objects.get(user=user)
-    wishlist_items = WishListItem.objects.filter(wishlist=wishlist)
+class WishListView(generics.ListAPIView):
+    permission_classes = (permissions.IsAuthenticated, )
+    pagination_class = PageNumberPagination
+    serializer_class = WishListItemSerializer
+    queryset = WishListItem.objects.all()
 
-    result = []
-    if WishListItem.objects.filter(wishlist=wishlist).exists():
-        
-        
-        for wishlist_item in wishlist_items:
-            item = {}
-            item['id'] = wishlist_item.id
-            product = Product.objects.get(id=wishlist_item.product.id)
-            product = ProductSerializer(product, context={"request": request})
-            item['product'] = product.data
-            result.append(item)
-        return result
-
-
-def getItemTotal(user):
-    wishlist = WishList.objects.get(user=user)
-    return wishlist.total_items
-
-
-class GetItemsView(APIView):
-    def get(self, request, format=None):
+    def list(self, request, format=None):
         user = self.request.user
-        try:
-            result = getWishlist(user, request)
-            total_items = getItemTotal(user)
-            return Response({
-                'wishlist': result,
-                'total_items': total_items,
-            }, status=status.HTTP_200_OK)
-        except:
-            return Response(
-                {'error': 'Something went wrong when retrieving wishlist items'},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+        queryset = self.get_queryset()
 
+        wishlist = WishList.objects.get(user=user)
+        queryset = queryset.filter(wishlist=wishlist)
+        serializer = self.serializer_class(
+            queryset, many=True, context={'request': request})
 
-class AddItemView(APIView):
+        page = self.paginate_queryset(serializer.data)
+        return self.get_paginated_response(page)
+
     def post(self, request, format=None):
         user = self.request.user
+        queryset = self.get_queryset()
         data = self.request.data
-
+        wishlist = WishList.objects.get(user=user)
         try:
             product_id = int(data['product_id'])
         except:
@@ -58,7 +39,6 @@ class AddItemView(APIView):
                 {'error': 'Product ID must be an integer'},
                 status=status.HTTP_404_NOT_FOUND
             )
-
         try:
             if not Product.objects.filter(id=product_id).exists():
                 return Response(
@@ -67,7 +47,6 @@ class AddItemView(APIView):
                 )
 
             product = Product.objects.get(id=product_id)
-            wishlist = WishList.objects.get(user=user)
 
             if WishListItem.objects.filter(wishlist=wishlist, product=product).exists():
                 return Response(
@@ -79,33 +58,25 @@ class AddItemView(APIView):
                 product=product,
                 wishlist=wishlist
             )
+            queryset = queryset.filter(wishlist=wishlist)
+            serializer = self.serializer_class(
+                queryset, many=True, context={'request': request})
 
-            if WishListItem.objects.filter(product=product, wishlist=wishlist).exists():
-                total_items = int(wishlist.total_items) + 1
-                WishList.objects.filter(user=user).update(
-                    total_items=total_items
-                )
+            page = self.paginate_queryset(serializer.data)
+            return self.get_paginated_response(page)
 
-            result = getWishlist(user, request)
-            total_items = getItemTotal(user)
-
-            return Response({
-                'wishlist': result,
-                'total_items': total_items,
-            }, status=status.HTTP_201_CREATED)
         except:
             return Response(
                 {'error': 'Something went wrong when adding item to wishlist'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-
-class RemoveItemView(APIView):
     def delete(self, request, format=None):
         user = self.request.user
-        data = self.request.data
+        queryset = self.get_queryset()
+        wishlist = WishList.objects.get(user=user)
         try:
-            product_id = int(data['product_id'])
+            product_id = request.query_params.get('product_id')
         except:
             return Response(
                 {'error': 'Product ID must be an integer'},
@@ -113,7 +84,7 @@ class RemoveItemView(APIView):
             )
 
         try:
-            wishlist = WishList.objects.get(user=user)
+
             if not Product.objects.filter(id=product_id).exists():
                 return Response(
                     {'error': 'Product with this ID does not exist'},
@@ -131,19 +102,13 @@ class RemoveItemView(APIView):
                 product=product
             ).delete()
 
-            if not WishListItem.objects.filter(wishlist=wishlist, product=product).exists():
-                # Actualiizar el total de items en el wishlist
-                total_items = int(wishlist.total_items) - 1
-                WishList.objects.filter(user=user).update(
-                    total_items=total_items
-                )
+            queryset = queryset.filter(wishlist=wishlist)
+            serializer = self.serializer_class(
+                queryset, many=True, context={'request': request})
 
-            result = getWishlist(user, request)
-            total_items = getItemTotal(user)
-            return Response({
-                'wishlist': result,
-                'total_items': total_items,
-            }, status=status.HTTP_200_OK)
+            page = self.paginate_queryset(serializer.data)
+            return self.get_paginated_response(page)
+
         except:
             return Response(
                 {'error': 'Something went wrong when removing wishlist item'},

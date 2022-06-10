@@ -1,12 +1,13 @@
 import random
 from django.utils import timezone
 from apps.product.models import Brand, Category, CharacteristicProduct, Product, ProductImage
-from apps.product.serializers import BrandSerializer, CategorySerializer, CharacteristicProductSerializer, ProductImageSerializer, ProductSerializer
+from apps.product.serializers import BrandSerializer, CategoryChildrenSerializer, CategorySerializer, CharacteristicProductSerializer, ProductImageSerializer, ProductSerializer
 from rest_framework import status, permissions
 from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 from django.db.models import Q
+
 
 class ListBrandView(generics.ListAPIView):
     serializer_class = BrandSerializer
@@ -19,35 +20,18 @@ class ListBrandView(generics.ListAPIView):
         serializer = BrandSerializer(queryset, many=True)
         return Response({'brands': serializer.data}, status=status.HTTP_200_OK)
 
+
 class ListCategoryView(generics.ListAPIView):
     pagination_class = None
     permission_classes = (permissions.AllowAny, )
+    serializer_class = CategorySerializer
+    queryset = Category.objects.filter(parent=None)
 
-    def list(self, *args, **kwargs):
-        categories = Category.objects.all()
-        products = Product.objects.all()
-        result = []
-        for category in categories:
-            if not category.parent:
-                total = products.filter(category=category).count()
-                item = {}
-                item['id'] = category.id
-                item['title'] = category.title
-                item['slug'] = category.slug
-                item['total'] = total
-                item['sub_categories'] = []
-                for cat in categories:
-                    sub_item = {}
-                    total = products.filter(category=cat).count()
-                    if cat.parent and cat.parent.id == category.id:
-                        sub_item['id'] = cat.id
-                        sub_item['title'] = cat.title
-                        sub_item['sub_categories'] = []
-                        sub_item['slug'] = cat.slug
-                        sub_item['total'] = total
-                        item['sub_categories'].append(sub_item)
-                result.append(item)
-        return Response({'categories': result}, status=status.HTTP_200_OK)
+    def list(self, request, format=None, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.serializer_class(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 class ListProductsHomeView(generics.ListAPIView):
     permission_classes = (permissions.AllowAny, )
@@ -87,11 +71,13 @@ class ListProductsHomeView(generics.ListAPIView):
                 {'error': 'No products to list'},
                 status=status.HTTP_404_NOT_FOUND)
 
+
 class ListProductView(generics.ListAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
     pagination_class = PageNumberPagination
     permission_classes = (permissions.AllowAny, )
+
 
 class ListBySearchView(generics.ListAPIView):
     serializer_class = ProductSerializer
@@ -109,16 +95,17 @@ class ListBySearchView(generics.ListAPIView):
         sort_by = data['sort_by']
         price_range = data['price_range']
         query = data['query']
-        
+
         if len(query) > 0:
-            queryset=queryset.filter(Q(title__icontains=query)|Q(description__icontains=query))
+            queryset = queryset.filter(
+                Q(title__icontains=query) | Q(description__icontains=query))
 
         if len(categories) != 0:
             filtered_categories = []
             for cat in categories:
                 filtered_categories.append(cat)
 
-            queryset =queryset.filter(
+            queryset = queryset.filter(
                 category__in=filtered_categories)
 
         if len(brands) != 0:
@@ -156,6 +143,7 @@ class ListBySearchView(generics.ListAPIView):
         page = self.paginate_queryset(serializer.data)
         return self.get_paginated_response(page)
 
+
 class ProductsCategoryView(generics.ListAPIView):
     serializer_class = ProductSerializer
     pagination_class = PageNumberPagination
@@ -164,7 +152,7 @@ class ProductsCategoryView(generics.ListAPIView):
 
     def get(self, request, slug, format=None, *args, **kwargs):
         queryset = self.get_queryset()
-        
+
         if Category.objects.filter(slug=slug).exists():
             category = Category.objects.get(slug=slug)
             if not category.parent:
@@ -183,6 +171,7 @@ class ProductsCategoryView(generics.ListAPIView):
             return Response(
                 {'error': 'Category with this ID does not exist'},
                 status=status.HTTP_404_NOT_FOUND)
+
 
 class BrandsCategoryView(generics.ListAPIView):
     serializer_class = ProductSerializer
@@ -206,8 +195,9 @@ class BrandsCategoryView(generics.ListAPIView):
                 {'error': 'Category with this ID does not exist'},
                 status=status.HTTP_404_NOT_FOUND)
 
+
 class GetSubCategoryView(generics.ListAPIView):
-    serializer_class = CategorySerializer
+    serializer_class = CategoryChildrenSerializer
     pagination_class = None
     permission_classes = (permissions.AllowAny, )
     queryset = Category.objects.all()
@@ -220,6 +210,7 @@ class GetSubCategoryView(generics.ListAPIView):
             return Response(
                 {'error': 'Category with this ID does not exist'},
                 status=status.HTTP_404_NOT_FOUND)
+
 
 class ProductDetailView(generics.ListAPIView):
     permission_classes = (permissions.AllowAny, )
@@ -261,7 +252,8 @@ class ProductDetailView(generics.ListAPIView):
             characteristic = CharacteristicProductSerializer(
                 characteristic, many=True)
             images = ProductImageSerializer(images, many=True)
-            products_views = list(Product.objects.order_by('-num_visits').exclude(id=product.id).exclude(id__in=related_products))[:10]
+            products_views = list(Product.objects.order_by(
+                '-num_visits').exclude(id=product.id).exclude(id__in=related_products))[:10]
             products_views = random.sample(products_views, 4)
 
             return Response({

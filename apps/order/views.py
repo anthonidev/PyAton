@@ -11,6 +11,7 @@ from apps.product.models import Product
 from apps.shipping.models import Shipping
 from rest_framework import status, generics, permissions
 from rest_framework.pagination import PageNumberPagination
+from django.core.mail import send_mail
 
 
 class OrderView(generics.ListAPIView):
