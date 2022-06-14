@@ -5,6 +5,7 @@ import environ
 import cloudinary
 import django
 from django.utils.encoding import force_str
+
 django.utils.encoding.force_text = force_str
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -165,6 +166,8 @@ USE_TZ = True
 
 
 STATIC_URL = 'static/'
+
+
 JAZZMIN_SETTINGS = {
     "site_title": "Aton Admin",
     "site_header": "Aton Admin",
@@ -299,6 +302,8 @@ DJOSER = {
         'user_delete': 'djoser.serializers.UserDeleteSerializer',
     },
 }
+
+
 # EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 AUTH_USER_MODEL = "user.UserAccount"

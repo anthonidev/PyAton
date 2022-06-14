@@ -1,4 +1,5 @@
 from cmath import log
+from distutils.log import error
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, generics, permissions
@@ -10,6 +11,8 @@ from cloudinary import api
 from rest_framework.parsers import JSONParser
 from rest_framework.parsers import MultiPartParser
 from rest_framework.parsers import FormParser
+from cloudinary.forms import CloudinaryJsFileField
+import cloudinary
 
 
 class GetUserProfileView(APIView):
@@ -31,25 +34,31 @@ class GetUserProfileView(APIView):
 
 
 class UpdateUserProfileView(APIView):
-    parser_classes = [JSONParser, MultiPartParser, FormParser]
-
-    def put(self, request, format=None):
+    def put(self, request):
         try:
             user = self.request.user
             data = self.request.data
-
             dni = data['dni']
             dob = data['dob']
+            image = data['image']
             first_name = data['first_name']
             last_name = data['last_name']
             treatment = data['treatment']
-
-            UserProfile.objects.filter(user=user).update(
-                treatment=treatment,
-                dni=dni,
-                dob=dob,
-            )
-
+            print(image)
+            print(data)
+            try:
+                UserProfile.objects.filter(user=user).update(
+                    treatment=treatment,
+                    dni=dni,
+                    dob=dob,
+                    photo=image,
+                )
+            except error:
+                print(error)
+                return Response(
+                    {'error': 'Something went wrong when updating profile'},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
             user_profile = UserProfile.objects.get(user=user)
             user_profile = UserProfileSerializer(user_profile)
 
@@ -189,7 +198,7 @@ class AddressView(generics.ListAPIView):
         try:
             address_id = request.query_params.get('id')
             user = self.request.user
-            
+
             user_profile = UserProfile.objects.get(user=user)
             UserAddress.objects.filter(
                 account=user_profile, id=address_id).delete()
