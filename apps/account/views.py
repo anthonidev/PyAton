@@ -1,5 +1,3 @@
-from cmath import log
-from distutils.log import error
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, generics, permissions
@@ -44,17 +42,18 @@ class UpdateUserProfileView(APIView):
             first_name = data['first_name']
             last_name = data['last_name']
             treatment = data['treatment']
-            print(image)
-            print(data)
+
             try:
+                img = cloudinary.uploader.upload(image)
+
                 UserProfile.objects.filter(user=user).update(
                     treatment=treatment,
                     dni=dni,
                     dob=dob,
-                    photo=image,
+                    photo=img['secure_url'],
                 )
-            except error:
-                print(error)
+            except Exception as e:
+                print(e)
                 return Response(
                     {'error': 'Something went wrong when updating profile'},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR

@@ -5,6 +5,7 @@ import environ
 import cloudinary
 import django
 from django.utils.encoding import force_str
+from cloudinary.models import CloudinaryField
 
 django.utils.encoding.force_text = force_str
 BASE_DIR = Path(__file__).resolve().parent.parent
