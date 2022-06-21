@@ -77,7 +77,6 @@ class CartView(generics.ListAPIView):
                         cart=queryset, product=product).update(count=count)
                 else:
                     return Response({'error': 'Not enough of this item in stock'}, status=status.HTTP_423_LOCKED)
-                
 
                 return Response(
                     {'cart': self.serializer_class(queryset).data},
@@ -110,21 +109,27 @@ class CartView(generics.ListAPIView):
             return Response({'error': 'This product does not exist'}, status=status.HTTP_404_NOT_FOUND)
 
 
+class EmptyCartView(generics.ListAPIView):
+    permission_classes = (permissions.IsAuthenticated, )
+    pagination_class = None
+    serializer_class = CartSerializer
+    queryset = Cart.objects.all()
 
-
-class EmptyCartView(APIView):
     def delete(self, request, format=None):
         user = self.request.user
-        try:
-            cart = Cart.objects.get(user=user)
+        queryset = self.get_queryset()
 
-            if not CartItem.objects.filter(cart=cart).exists():
+        try:
+            queryset = queryset.get(user=user)
+            if not CartItem.objects.filter(cart=queryset).exists():
                 return Response({'success': 'Cart is already empty'}, status=status.HTTP_200_OK)
 
-            CartItem.objects.filter(cart=cart).delete()
-            Cart.objects.filter(user=user).update(total_items=0)
+            CartItem.objects.filter(cart=queryset).delete()
 
-            return Response({'success': 'Cart emptied successfully'}, status=status.HTTP_200_OK)
+            return Response(
+                {'cart': self.serializer_class(queryset).data},
+                status=status.HTTP_200_OK
+            )
         except:
             return Response({'error': 'Something went wrong emptying cart'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 

@@ -1,3 +1,4 @@
+import uuid
 from django.db import models
 from apps.product.models import Product
 from apps.order.Countries import Countries
@@ -31,6 +32,17 @@ class Order(models.Model):
     shipping_price = models.DecimalField(max_digits=7, decimal_places=2)
     date_issued = models.DateTimeField(auto_now_add=True)
     enterprise = models.CharField(max_length=255, default='')
+
+    def save(self, *args, **kwargs):
+        if not self.transaction_id:
+            year, month, date = self.date_issued.year, self.date_issued.month, self.date_issued.day
+            count = Order.objects.filter(
+                full_name=self.full_name, date_issued=self.date_issued, city=self.city).count() + 1
+            total_count = "{0:04d}".format(count)
+            self.transaction_id = "{}/{}-{}/{}{}/{}".format(
+                year, self.full_name, self.city, month, date, total_count)
+
+        super(Order, self).save(*args, **kwargs)
 
     def __str__(self):
         return self.transaction_id

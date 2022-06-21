@@ -1,12 +1,99 @@
 import random
-from django.utils import timezone
-from apps.product.models import Brand, Category, CharacteristicProduct, Product, ProductImage
-from apps.product.serializers import BrandSerializer, CategoryChildrenSerializer, CategorySerializer, CharacteristicProductSerializer, ProductImageSerializer, ProductSerializer
+from .models import Brand, Category, CharacteristicProduct, Product, ProductImage
+from .serializers import (
+    BrandSerializer,
+    CategoryChildrenSerializer,
+    CategorySerializer,
+    CharacteristicProductSerializer,
+    DetailProductSerializer,
+    ProductImageSerializer,
+    ProductSerializer
+)
 from rest_framework import status, permissions
 from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 from django.db.models import Q
+
+from datetime import datetime
+
+
+class ProductDetailView(generics.RetrieveAPIView):
+    serializer_class = DetailProductSerializer
+    permission_classes = (permissions.AllowAny, )
+    pagination_class = None
+
+    def get(self, request, slug, *args, **kwargs):
+        if Product.objects.filter(slug=slug).exists():
+            product = Product.objects.get(slug=slug)
+            Product.objects.filter(slug=slug).update(
+                num_visits=product.num_visits + 1, last_visit=datetime.now())
+            serializer = self.serializer_class(product)
+
+            return Response({'detail_product': serializer.data}, status=status.HTTP_200_OK)
+        else:
+            return Response(
+                {'error': 'Product with this ID does not exist'},
+                status=status.HTTP_404_NOT_FOUND)
+
+
+class ProductDetailViewa(generics.ListAPIView):
+    permission_classes = (permissions.AllowAny, )
+    pagination_class = None
+    serializer_class = ProductSerializer
+
+    def get(self, request, slug, format=None):
+        if Product.objects.filter(slug=slug).exists():
+            product = Product.objects.get(slug=slug)
+
+            related_products = product.category.categories.filter(
+                parent=None).order_by("?").exclude(id=product.id)
+
+            if product.variants.all():
+                products_colors = list(
+                    product.variants.all().exclude(id=product.id))
+            elif product.parent:
+                products_colors = list(
+                    product.parent.variants.all().exclude(id=product.id))
+                related_products = list(product.category.products.filter(
+                    parent=None).exclude(id=product.parent.id))
+
+                products_colors.append(product.parent)
+            else:
+                products_colors = []
+
+            Product.objects.filter(slug=slug).update(
+                num_visits=product.num_visits + 1,
+                last_visit=datetime.now(),
+            )
+            characteristic = []
+            images = []
+            if CharacteristicProduct.objects.filter(product=product).exists():
+                characteristic = CharacteristicProduct.objects.filter(
+                    product=product)
+            if ProductImage.objects.filter(product=product).exists():
+                images = ProductImage.objects.filter(product=product)
+
+            characteristic = CharacteristicProductSerializer(
+                characteristic, many=True)
+            images = ProductImageSerializer(images, many=True)
+            products_views = list(Product.objects.order_by(
+                '-num_visits').exclude(id=product.id).exclude(id__in=related_products))[:10]
+            products_views = random.sample(products_views, 4)
+
+            return Response({
+                'characteristic': characteristic.data,
+                'images': images.data,
+                'related': self.serializer_class(related_products, many=True).data[:4],
+                'products_views': self.serializer_class(products_views, many=True).data,
+                'colors': self.serializer_class(products_colors, many=True).data,
+                'product': self.serializer_class(product).data,
+            }, status=status.HTTP_200_OK)
+
+        else:
+            return Response(
+                {'error': 'Product with this ID does not exist'},
+                status=status.HTTP_404_NOT_FOUND)
 
 
 class ListBrandView(generics.ListAPIView):
@@ -209,63 +296,4 @@ class GetSubCategoryView(generics.ListAPIView):
         else:
             return Response(
                 {'error': 'Category with this ID does not exist'},
-                status=status.HTTP_404_NOT_FOUND)
-
-
-class ProductDetailView(generics.ListAPIView):
-    permission_classes = (permissions.AllowAny, )
-    pagination_class = None
-    serializer_class = ProductSerializer
-
-    def get(self, request, slug, format=None):
-        if Product.objects.filter(slug=slug).exists():
-            product = Product.objects.get(slug=slug)
-
-            related_products = product.category.categories.filter(
-                parent=None).order_by("?").exclude(id=product.id)
-
-            if product.variants.all():
-                products_colors = list(
-                    product.variants.all().exclude(id=product.id))
-            elif product.parent:
-                products_colors = list(
-                    product.parent.variants.all().exclude(id=product.id))
-                related_products = list(product.category.products.filter(
-                    parent=None).exclude(id=product.parent.id))
-
-                products_colors.append(product.parent)
-            else:
-                products_colors = []
-
-            Product.objects.filter(slug=slug).update(
-                num_visits=product.num_visits + 1,
-                last_visit=timezone.now(),
-            )
-            characteristic = []
-            images = []
-            if CharacteristicProduct.objects.filter(product=product).exists():
-                characteristic = CharacteristicProduct.objects.filter(
-                    product=product)
-            if ProductImage.objects.filter(product=product).exists():
-                images = ProductImage.objects.filter(product=product)
-
-            characteristic = CharacteristicProductSerializer(
-                characteristic, many=True)
-            images = ProductImageSerializer(images, many=True)
-            products_views = list(Product.objects.order_by(
-                '-num_visits').exclude(id=product.id).exclude(id__in=related_products))[:10]
-            products_views = random.sample(products_views, 4)
-
-            return Response({
-                'characteristic': characteristic.data,
-                'images': images.data,
-                'related': self.serializer_class(related_products, many=True).data[:4],
-                'products_views': self.serializer_class(products_views, many=True).data,
-                'colors': self.serializer_class(products_colors, many=True).data,
-                'product': self.serializer_class(product).data,
-            }, status=status.HTTP_200_OK)
-
-        else:
-            return Response(
-                {'error': 'Product with this ID does not exist'},
                 status=status.HTTP_404_NOT_FOUND)

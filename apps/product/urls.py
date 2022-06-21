@@ -9,7 +9,8 @@ from apps.product.views import (
     ListProductView,
     ListProductsHomeView,
     ProductDetailView,
-    ProductsCategoryView
+    ProductsCategoryView,
+    ProductDetailView
 )
 
 app_name = "product"
@@ -20,8 +21,10 @@ urlpatterns = [
     path('brands', ListBrandView.as_view()),
     path('products', ListProductView.as_view()),
     path('filter', ListBySearchView.as_view()),
-    path('<slug>', ProductDetailView.as_view()),
+    # path('<slug>', ProductDetailView.as_view()),
     path('category/<slug>', ProductsCategoryView.as_view()),
     path('category/subcategory/<slug>', GetSubCategoryView.as_view()),
     path('brand/<id>', BrandsCategoryView.as_view()),
+    
+    path('<slug>', ProductDetailView.as_view()),
 ]

@@ -156,8 +156,6 @@ class ProcessOrderView(APIView):
 
         cart_items = CartItem.objects.filter(cart=cart)
 
-        # revisar si hay stock
-
         for cart_item in cart_items:
             if not Product.objects.filter(id=cart_item.product.id).exists():
                 return Response(
@@ -217,11 +215,9 @@ class ProcessOrderView(APIView):
         try:
             order = Order.objects.create(
                 user=user,
-                transaction_id=f'{full_name} {total_amount} {postal_zip_code}',
                 amount=total_amount,
                 full_name=full_name,
                 address=address,
-
                 district=district,
                 city=city,
                 postal_zip_code=postal_zip_code,
@@ -257,24 +253,24 @@ class ProcessOrderView(APIView):
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
 
-        # try:
-        #     send_mail(
-        #         'Your Order Details',
-        #         'Hey ' + full_name + ','
-        #         + '\n\nWe recieved your order!'
-        #         + '\n\nGive us some time to process your order and ship it out to you.'
-        #         + '\n\nYou can go on your user dashboard to check the status of your order.'
-        #         + '\n\nSincerely,'
-        #         + '\nShop Time',
-        #         'mail@mail.com',
-        #         [user.email],
-        #         fail_silently=False
-        #     )
-        # except:
-        #     return Response(
-        #         {'error': 'Transaction succeeded and order created, but failed to send email'},
-        #         status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        #     )
+        try:
+            send_mail(
+                'Your Order Details',
+                'Hey ' + full_name + ','
+                + '\n\nWe recieved your order!'
+                + '\n\nGive us some time to process your order and ship it out to you.'
+                + '\n\nYou can go on your user dashboard to check the status of your order.'
+                + '\n\nSincerely,'
+                + '\nShop Time',
+                'anthoni_pydev@anthonidev.me',
+                [user.email],
+                fail_silently=False
+            )
+        except:
+            return Response(
+                {'error': 'Transaction succeeded and order created, but failed to send email'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
         try:
             # Vaciar carrito de compras

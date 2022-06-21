@@ -2,6 +2,14 @@ from datetime import datetime
 from django.db import models
 from cloudinary.models import CloudinaryField
 from django.template.defaultfilters import slugify
+from django.db.models import Q
+from io import BytesIO
+from PIL import Image
+from django.core.files import File
+import cloudinary
+import requests
+import os
+from urllib.parse import urlparse
 
 
 class Brand(models.Model):
@@ -53,7 +61,7 @@ class Product(models.Model):
     brand = models.ForeignKey(Brand, on_delete=models.CASCADE)
 
     parent = models.ForeignKey(
-        'self', related_name='variants', on_delete=models.CASCADE, blank=True, null=True)
+        'self', related_name='colors', on_delete=models.CASCADE, blank=True, null=True)
 
     title = models.CharField(max_length=255)
     price = models.DecimalField(max_digits=6, decimal_places=2)
@@ -67,23 +75,9 @@ class Product(models.Model):
     num_visits = models.IntegerField(default=0)
     last_visit = models.DateTimeField(blank=True, null=True)
     sold = models.IntegerField(default=0)
-    photo = CloudinaryField('Image', overwrite=True, format="jpg")
+    photo = CloudinaryField('Image', overwrite=True, format="webp")
+    photo_thumbnail = CloudinaryField('photo_thumbnail', overwrite=True, format="webp", blank=True, null=True)
     description = models.TextField(blank=True, null=True)
-
-    class Meta:
-        ordering = ('-date_added',)
-
-    def get_category(self):
-        return self.category.title
-
-    def get_brand(self):
-        return self.brand.title
-
-    def get_absolute_url(self):
-        return '/%s/%s/' % (self.category.slug, self.slug)
-
-    def __str__(self):
-        return self.title
 
     def save(self, *args, **kwargs):
         to_assign = slugify(self.title)
@@ -92,9 +86,36 @@ class Product(models.Model):
         self.slug = to_assign
         super().save(*args, **kwargs)
 
+    class Meta:
+        ordering = ('-date_added',)
+
+    def get_colors(self):
+        if (self.parent):
+            id = []
+            for p in Product.objects.all().filter(parent=self.parent):
+                id.append(p.id)
+            id.append(self.parent.id)
+            return Product.objects.all().filter(id__in=id).exclude(id=self.id)
+        else:
+            products = Product.objects.filter(parent=self).exclude(id=self.id)
+            return products
+
+    def related_products(self):
+        return Product.objects.filter(category=self.category).exclude(id=self.id)[:4]
+
+    def get_category(self):
+        return self.category.title
+
+    def get_brand(self):
+        return self.brand.title
+
+    def __str__(self):
+        return self.title
+
 
 class CharacteristicProduct(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    product = models.ForeignKey(
+        Product, on_delete=models.CASCADE, related_name='characteristics')
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
 
@@ -103,7 +124,8 @@ class CharacteristicProduct(models.Model):
 
 
 class ProductImage(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    product = models.ForeignKey(
+        Product, on_delete=models.CASCADE, related_name='images')
     photo = CloudinaryField('Image', overwrite=True, format="jpg")
 
     def __str__(self):

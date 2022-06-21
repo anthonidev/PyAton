@@ -5,11 +5,6 @@ from rest_framework import status, generics, permissions
 from apps.user.models import UserAccount
 from .models import UserAddress, UserProfile
 from .serializers import UserAddressSerializer, UserProfileSerializer
-from cloudinary import api
-from rest_framework.parsers import JSONParser
-from rest_framework.parsers import MultiPartParser
-from rest_framework.parsers import FormParser
-from cloudinary.forms import CloudinaryJsFileField
 import cloudinary
 
 

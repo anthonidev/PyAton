@@ -27,6 +27,9 @@ class CartItem(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     count = models.IntegerField()
 
+    class Meta:
+        ordering = ('-id',)
+    
     def __str__(self):
         return self.product.title
 

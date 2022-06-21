@@ -5,7 +5,6 @@ import environ
 import cloudinary
 import django
 from django.utils.encoding import force_str
-from cloudinary.models import CloudinaryField
 
 django.utils.encoding.force_text = force_str
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -102,7 +101,7 @@ WSGI_APPLICATION = 'core.wsgi.application'
 
 
 DATABASES = {
-    "default": env.db("HEROKU_POSTGRESQL_MAROON_URL", default="postgres:///atonbase"),
+    "default": env.db("HEROKU_POSTGRESQL_MAROON_URL", default="postgres:///pgaton"),
 }
 DATABASES["default"]["ATOMIC_REQUESTS"] = True
 
@@ -157,12 +156,10 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
-LANGUAGE_CODE = 'en-us'
-
+LANGUAGE_CODE = 'es'
 TIME_ZONE = 'UTC'
 
 USE_I18N = True
-
 USE_TZ = True
 
 
@@ -280,7 +277,7 @@ SIMPLE_JWT = {
         'rest_framework_simplejwt.tokens.AccessToken',
     )
 }
-
+SITE_NAME = ('Aton SA')
 DJOSER = {
     'LOGIN_FIELD': 'email',
     'USER_CREATE_PASSWORD_RETYPE': True,
@@ -302,10 +299,17 @@ DJOSER = {
         'current_user': 'apps.user.serializers.UserCreateSerializer',
         'user_delete': 'djoser.serializers.UserDeleteSerializer',
     },
+    'EMAIL': {
+        'activation': 'djoser.email.ActivationEmail',
+        'confirmation': 'djoser.email.ConfirmationEmail',
+        'password_reset': 'djoser.email.PasswordResetEmail',
+        'password_changed_confirmation': 'djoser.email.PasswordChangedConfirmationEmail',
+        'username_changed_confirmation': 'djoser.email.UsernameChangedConfirmationEmail',
+        'username_reset': 'djoser.email.UsernameResetEmail',
+    }
 }
 
 
-# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 AUTH_USER_MODEL = "user.UserAccount"
 

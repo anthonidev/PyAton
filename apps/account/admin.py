@@ -10,8 +10,7 @@ class AddressItemInline(admin.StackedInline):
     
 
 class UserProfileAdmin(admin.ModelAdmin):
-    def has_delete_permission(self, request, obj=None):
-        return False
+  
     inlines=[AddressItemInline]
     
     list_display = ('user', 'treatment', 'phone', 'dni', )
