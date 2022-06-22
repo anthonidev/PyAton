@@ -35,12 +35,16 @@ class Order(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.transaction_id:
-            year, month, date = self.date_issued.year, self.date_issued.month, self.date_issued.day
+            year = datetime.now().year
+            month = datetime.now().month
+            date = datetime.now().day
+            secont = datetime.now().second
+            microsecond = datetime.now().microsecond
             count = Order.objects.filter(
                 full_name=self.full_name, date_issued=self.date_issued, city=self.city).count() + 1
             total_count = "{0:04d}".format(count)
-            self.transaction_id = "{}/{}-{}/{}{}/{}".format(
-                year, self.full_name, self.city, month, date, total_count)
+            self.transaction_id = "{}/{}-{}/{}-{}-{}/{}".format(
+                year, self.full_name, self.city, month, date, total_count, secont, microsecond)
 
         super(Order, self).save(*args, **kwargs)
 

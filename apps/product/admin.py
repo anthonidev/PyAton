@@ -18,7 +18,7 @@ class ProductItemAdmin(admin.ModelAdmin):
     
 class ProductImagesInline(admin.TabularInline):
     model=ProductImage
-    fields =['product','photo']
+    fields =['product','photo','photo_thumbnail_sm','photo_thumbnail_xm']
 class CharacteristicItemInline(admin.TabularInline):
     model=CharacteristicProduct
     fields =['product','title','description']

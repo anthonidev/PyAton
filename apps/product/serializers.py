@@ -19,6 +19,8 @@ class ProductImageSerializer(serializers.ModelSerializer):
         fields = [
             'id',
             'photo',
+            'photo_thumbnail_sm',
+            'photo_thumbnail_xm',
         ]
 
 
@@ -31,16 +33,14 @@ class ColorProductSerializer(serializers.ModelSerializer):
             'price',
             'compare_price',
             'photo',
+            'photo_thumbnail_sm',
+            'photo_thumbnail_xm',
             'slug',
         ]
 
 
-class DetailProductSerializer(serializers.ModelSerializer):
-    characteristics = CharacteristicProductSerializer(many=True)
-    images = ProductImageSerializer(many=True)
-    colors = ColorProductSerializer(many=True, source="get_colors")
-    related = ColorProductSerializer(many=True, source="related_products")
 
+class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = [
@@ -54,10 +54,36 @@ class DetailProductSerializer(serializers.ModelSerializer):
             'quantity',
             'date_added',
             'slug',
-            'num_visits',
-            'last_visit',
             'sold',
             'photo',
+            'photo_thumbnail_sm',
+            'photo_thumbnail_xm',
+            'description'
+        ]
+
+
+class DetailProductSerializer(serializers.ModelSerializer):
+    characteristics = CharacteristicProductSerializer(many=True)
+    images = ProductImageSerializer(many=True)
+    colors = ProductSerializer(many=True, source="get_colors")
+    related = ProductSerializer(many=True, source="related_products")
+
+    class Meta:
+        model = Product
+        fields = [
+            'id',
+            'get_category',
+            'get_brand',
+            'title',
+            'price',
+            'compare_price',
+            'is_featured',
+            'quantity',
+            'slug',
+            'sold',
+            'photo',
+            'photo_thumbnail_sm',
+            'photo_thumbnail_xm',
             'description',
             'characteristics',
             'images',
@@ -101,24 +127,3 @@ class BrandSerializer(serializers.ModelSerializer):
             'title',
         ]
 
-
-class ProductSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Product
-        fields = [
-            'id',
-            'get_category',
-            'get_brand',
-            'title',
-            'price',
-            'compare_price',
-            'is_featured',
-            'quantity',
-            'date_added',
-            'slug',
-            'num_visits',
-            'last_visit',
-            'sold',
-            'photo',
-            'description'
-        ]

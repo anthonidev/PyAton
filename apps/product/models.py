@@ -2,14 +2,6 @@ from datetime import datetime
 from django.db import models
 from cloudinary.models import CloudinaryField
 from django.template.defaultfilters import slugify
-from django.db.models import Q
-from io import BytesIO
-from PIL import Image
-from django.core.files import File
-import cloudinary
-import requests
-import os
-from urllib.parse import urlparse
 
 
 class Brand(models.Model):
@@ -29,7 +21,7 @@ class Category(models.Model):
         'self', related_name='children', on_delete=models.CASCADE, blank=True, null=True)
     is_featured = models.BooleanField(default=False)
     photo = CloudinaryField('Image', overwrite=True,
-                            format="jpg", blank=True, null=True)
+                            format="webp", blank=True, null=True)
     slug = models.SlugField(max_length=255, null=True, blank=True)
 
     def __str__(self):
@@ -76,18 +68,22 @@ class Product(models.Model):
     last_visit = models.DateTimeField(blank=True, null=True)
     sold = models.IntegerField(default=0)
     photo = CloudinaryField('Image', overwrite=True, format="webp")
-    photo_thumbnail = CloudinaryField('photo_thumbnail', overwrite=True, format="webp", blank=True, null=True)
+    photo_thumbnail_sm = CloudinaryField(
+        'photo_thumbnail_sm', overwrite=True, format="webp", blank=True, null=True)
+    photo_thumbnail_xm = CloudinaryField(
+        'photo_thumbnail_xm', overwrite=True, format="webp", blank=True, null=True)
     description = models.TextField(blank=True, null=True)
-
-    def save(self, *args, **kwargs):
-        to_assign = slugify(self.title)
-        if Product.objects.filter(slug=to_assign).exists():
-            to_assign = to_assign+str(Product.objects.all().count())
-        self.slug = to_assign
-        super().save(*args, **kwargs)
 
     class Meta:
         ordering = ('-date_added',)
+
+    def save(self, *args, **kwargs):
+        if not self.id:
+            to_assign = slugify(self.title)
+            if Product.objects.filter(slug=to_assign).exists():
+                to_assign = to_assign+str(Product.objects.all().count())
+            self.slug = to_assign
+            super().save(*args, **kwargs)
 
     def get_colors(self):
         if (self.parent):
@@ -127,6 +123,10 @@ class ProductImage(models.Model):
     product = models.ForeignKey(
         Product, on_delete=models.CASCADE, related_name='images')
     photo = CloudinaryField('Image', overwrite=True, format="jpg")
+    photo_thumbnail_sm = CloudinaryField(
+        'photo_thumbnail_sm', overwrite=True, format="webp", blank=True, null=True)
+    photo_thumbnail_xm = CloudinaryField(
+        'photo_thumbnail_xm', overwrite=True, format="webp", blank=True, null=True)
 
     def __str__(self):
         return self.product.title
