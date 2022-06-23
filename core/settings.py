@@ -5,10 +5,10 @@ import environ
 import cloudinary
 import django
 from django.utils.encoding import force_str
-import dj_database_url
+import django_heroku
 django.utils.encoding.force_text = force_str
 BASE_DIR = Path(__file__).resolve().parent.parent
-import sys
+
 env = environ.Env()
 environ.Env.read_env()
 ENVIRONMENT = env
@@ -23,8 +23,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY')
 DOMAIN = os.environ.get('DOMAIN')
 
 DEBUG = True
-# DISABLE_COLLECTSTATIC = 1
-# STATICFILES_DIRS = (os.path.join(BASE_DIR, "static"),)
+
 ALLOWED_HOSTS = ['*']
 
 DJANGO_APPS = [
@@ -100,13 +99,13 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'core.wsgi.application'
 
-if len(sys.argv) > 0 and sys.argv[1] != 'collectstatic':
-    if os.getenv("DATABASE_URL", None) is None:
-        raise Exception("DATABASE_URL environment variable not defined")
-
+django_heroku.settings(locals())
 DATABASES = {
-        "default": dj_database_url.parse(os.environ.get("DATABASE_URL")),
+    "default": env.db("HEROKU_POSTGRESQL_MAROON_URL", default="postgres:///pgaton"),
 }
+DATABASES["default"]["ATOMIC_REQUESTS"] = True
+
+
 CORS_ORIGIN_WHITELIST = [
     'http://localhost:3000',
     'http://localhost:3001',
@@ -163,11 +162,10 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
-STATIC_URL = "/static/"
-STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
-# Uncomment if you have extra static files and a directory in your GitHub repo.
-# If you don't have this directory and have this uncommented your build will fail
-# STATICFILES_DIRS = (os.path.join(BASE_DIR, "static"),)
+
+STATIC_URL = 'static/'
+
+
 JAZZMIN_SETTINGS = {
     "site_title": "Aton Admin",
     "site_header": "Aton Admin",
@@ -316,6 +314,7 @@ DJOSER = {
 AUTH_USER_MODEL = "user.UserAccount"
 
 
+# if not DEBUG:
 DEFAULT_FROM_EMAIL = 'ATON - Empresa  <anthoni_pydev@anthonidev.me>'
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = env('EMAIL_HOST')
