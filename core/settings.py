@@ -22,9 +22,9 @@ cloudinary.config(
 SECRET_KEY = os.environ.get('SECRET_KEY')
 DOMAIN = os.environ.get('DOMAIN')
 
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['localhost','pyaton-api.herokuapp.com']
 
 DJANGO_APPS = [
     'jazzmin',
