@@ -161,7 +161,7 @@ TIME_ZONE = 'UTC'
 
 USE_I18N = True
 USE_TZ = True
-
+DISABLE_COLLECTSTATIC=1
 
 STATIC_URL = 'static/'
 
