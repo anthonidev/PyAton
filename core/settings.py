@@ -8,7 +8,7 @@ from django.utils.encoding import force_str
 import dj_database_url
 django.utils.encoding.force_text = force_str
 BASE_DIR = Path(__file__).resolve().parent.parent
-
+import sys
 env = environ.Env()
 environ.Env.read_env()
 ENVIRONMENT = env
@@ -100,7 +100,9 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'core.wsgi.application'
 
-
+if len(sys.argv) > 0 and sys.argv[1] != 'collectstatic':
+    if os.getenv("DATABASE_URL", None) is None:
+        raise Exception("DATABASE_URL environment variable not defined")
 
 DATABASES = {
         "default": dj_database_url.parse(os.environ.get("DATABASE_URL")),
@@ -161,9 +163,11 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
-STATIC_URL = 'static/'
-STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
-
+STATIC_URL = "/static/"
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+# Uncomment if you have extra static files and a directory in your GitHub repo.
+# If you don't have this directory and have this uncommented your build will fail
+# STATICFILES_DIRS = (os.path.join(BASE_DIR, "static"),)
 JAZZMIN_SETTINGS = {
     "site_title": "Aton Admin",
     "site_header": "Aton Admin",
@@ -312,7 +316,6 @@ DJOSER = {
 AUTH_USER_MODEL = "user.UserAccount"
 
 
-# if not DEBUG:
 DEFAULT_FROM_EMAIL = 'ATON - Empresa  <anthoni_pydev@anthonidev.me>'
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = env('EMAIL_HOST')
