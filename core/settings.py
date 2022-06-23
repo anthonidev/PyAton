@@ -101,7 +101,7 @@ WSGI_APPLICATION = 'core.wsgi.application'
 
 django_heroku.settings(locals())
 DATABASES = {
-    "default": env.db("HEROKU_POSTGRESQL_MAROON_URL", default="postgres:///pgaton"),
+    "default": env.db("DATABASE_URL", default="postgres:///pgaton"),
 }
 DATABASES["default"]["ATOMIC_REQUESTS"] = True
 
