@@ -5,7 +5,7 @@ import environ
 import cloudinary
 import django
 from django.utils.encoding import force_str
-
+import dj_database_url
 django.utils.encoding.force_text = force_str
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -23,7 +23,8 @@ SECRET_KEY = os.environ.get('SECRET_KEY')
 DOMAIN = os.environ.get('DOMAIN')
 
 DEBUG = True
-
+DISABLE_COLLECTSTATIC = 1
+# STATICFILES_DIRS = (os.path.join(BASE_DIR, "static"),)
 ALLOWED_HOSTS = ['*']
 
 DJANGO_APPS = [
@@ -100,12 +101,10 @@ TEMPLATES = [
 WSGI_APPLICATION = 'core.wsgi.application'
 
 
+
 DATABASES = {
-    "default": env.db("HEROKU_POSTGRESQL_MAROON_URL", default="postgres:///pgaton"),
+        "default": dj_database_url.parse(os.environ.get("DATABASE_URL")),
 }
-DATABASES["default"]["ATOMIC_REQUESTS"] = True
-
-
 CORS_ORIGIN_WHITELIST = [
     'http://localhost:3000',
     'http://localhost:3001',
@@ -161,7 +160,6 @@ TIME_ZONE = 'UTC'
 
 USE_I18N = True
 USE_TZ = True
-DISABLE_COLLECTSTATIC=1
 
 STATIC_URL = 'static/'
 
