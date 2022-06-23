@@ -115,8 +115,8 @@ CORS_ORIGIN_WHITELIST = [
     'http://127.0.0.1:3000',
     'http://127.0.0.1:3001',
 
-    'https://frontend-surf-academy.herokuapp.com',
-    'https://backend-surf-academy.herokuapp.com'
+    'https://www.atonperu.com/',
+    'https://pyaton-api.herokuapp.com'
 ]
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:3000',
@@ -127,8 +127,8 @@ CORS_ALLOWED_ORIGINS = [
     'http://127.0.0.1:3000',
     'http://127.0.0.1:3001',
 
-    'https://frontend-surf-academy.herokuapp.com',
-    'https://backend-surf-academy.herokuapp.com'
+    'https://www.atonperu.com',
+    'https://pyaton-api.herokuapp.com'
 ]
 
 
