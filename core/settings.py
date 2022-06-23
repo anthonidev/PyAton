@@ -23,7 +23,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY')
 DOMAIN = os.environ.get('DOMAIN')
 
 DEBUG = True
-DISABLE_COLLECTSTATIC = 1
+# DISABLE_COLLECTSTATIC = 1
 # STATICFILES_DIRS = (os.path.join(BASE_DIR, "static"),)
 ALLOWED_HOSTS = ['*']
 
@@ -162,7 +162,7 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = 'static/'
-
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 
 JAZZMIN_SETTINGS = {
     "site_title": "Aton Admin",
