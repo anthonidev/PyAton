@@ -7,6 +7,9 @@ import django
 from django.utils.encoding import force_str
 import django_heroku
 django.utils.encoding.force_text = force_str
+
+import dj_database_url
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 env = environ.Env()
@@ -22,7 +25,7 @@ cloudinary.config(
 SECRET_KEY = os.environ.get('SECRET_KEY')
 DOMAIN = os.environ.get('DOMAIN')
 
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ['localhost','pyaton-api.herokuapp.com']
 
@@ -100,10 +103,12 @@ TEMPLATES = [
 WSGI_APPLICATION = 'core.wsgi.application'
 
 django_heroku.settings(locals())
+
 DATABASES = {
-    "default": env.db("DATABASE_URL", default="postgres:///pgaton"),
+    'default': dj_database_url.config(
+        default=os.environ.get('DATABASE_URL')
+    )
 }
-DATABASES["default"]["ATOMIC_REQUESTS"] = True
 
 
 CORS_ORIGIN_WHITELIST = [
