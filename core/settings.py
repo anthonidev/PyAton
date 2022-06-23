@@ -27,7 +27,7 @@ DOMAIN = os.environ.get('DOMAIN')
 
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost','pyaton-api.herokuapp.com']
+ALLOWED_HOSTS = ['pyaton-api.herokuapp.com',]
 
 DJANGO_APPS = [
     'jazzmin',
