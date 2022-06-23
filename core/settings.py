@@ -43,7 +43,7 @@ DJANGO_APPS = [
 PROJECT_APPS = [
     'apps.user',
     'apps.account',
-    'drf_yasg',
+    # 'drf_yasg',
 ]
 
 MAIN_APPS = [
