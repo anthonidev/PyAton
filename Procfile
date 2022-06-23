@@ -1,1 +1,5 @@
-web: gunicorn core.wsgi.application
+release: python manage.py makemigrations
+--no-input
+release: python manage.py migrate --no-input
+
+web: gunicorn core.wsgi --bind --preload -w 4
